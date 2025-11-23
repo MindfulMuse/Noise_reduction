@@ -1,0 +1,66 @@
+DeepFilterNet Single-Port Server Setup Instructions
+===================================================
+
+1️⃣ Install Python dependencies
+-------------------------------
+Open a terminal and run:
+
+    pip install aiohttp numpy deepfilternet torch
+
+> ⚠️ Make sure you have PyTorch installed (CPU or GPU version).  
+
+2️⃣ Run the DeepFilterNet server
+--------------------------------
+In the folder containing `server.py`, run:
+
+    python server.py
+
+You should see something like:
+
+    ✅ Server running on port 8080
+    🌐 Local access:
+       http://localhost:8080
+       http://<your-local-ip>:8080
+    🚀 For remote access, run:
+       ngrok http 8080
+
+3️⃣ Start ngrok for HTTPS & remote access
+----------------------------------------
+> Note: Microphone access on browsers requires HTTPS. HTTP alone will not work on most mobile browsers.
+
+1. Open another terminal.
+2. Run ngrok:
+
+       ngrok http 8080
+
+3. Copy the **HTTPS URL** from ngrok (e.g., https://a53ae11c7737.ngrok-free.app)
+
+4️⃣ Open the server in your browser
+-----------------------------------
+- On your **laptop** or **phone**, go to the ngrok HTTPS URL.
+- Make sure you **allow microphone access** when prompted.
+
+5️⃣ Select the mode
+-------------------
+- Click **📤 Sender** on the device that will send audio.
+- Click **📥 Receiver** on the device that will receive cleaned audio.
+- Start sending/receiving using the buttons.
+
+6️⃣ Common issues & fixes
+-------------------------
+- **Phone keeps disconnecting / reconnecting:**
+    - Disable Private DNS temporarily on your phone. Some DNS providers block ngrok.
+      - Android: Settings → Network & Internet → Private DNS → Off
+      - iOS: Settings → Wi-Fi → Tap your network → Configure DNS → Off
+
+
+7️⃣ Stopping the server
+-----------------------
+- Press `Ctrl+C` in the terminal running `server.py` to stop the server.
+- Press `Ctrl+C` in the terminal running ngrok to stop the tunnel.
+
+8️⃣ Tips
+---------
+- Always use the **ngrok HTTPS URL** on mobile to ensure microphone access works.
+- Reconnect attempts happen automatically if the connection drops.
+- Make sure both sender and receiver devices are connected to the same ngrok session.
