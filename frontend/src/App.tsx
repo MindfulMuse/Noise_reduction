@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import ConsolePage from './pages/Console';
+import NoiseCleaner from "./pages/NoiseCleaner";
 
 const App = () => {
   return (
@@ -8,6 +9,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/console" element={<ConsolePage />} />
+        <Route path="/NoiseCleaner" element={<NoiseCleaner />} />
+
       </Routes>
     </BrowserRouter>
   );
