@@ -394,32 +394,13 @@ CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)  # 24,000 samples
 # ==========================================
 # DEEPFILTER INITIALIZATION
 # ==========================================
+
 # def init_deepfilter():
-#     global df_model, df_state, DEVICE, DEEPFILTER_AVAILABLE
-#     try:
-#         from df.enhance import enhance, init_df
+#     global df_model, df_state
+#     if DEEPFILTER_AVAILABLE:
 #         print("🔄 Loading DeepFilterNet...")
 #         df_model, df_state, _ = init_df()
-#         DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-#         df_model = df_model.to(DEVICE)
-#         DEEPFILTER_AVAILABLE = True
-#         print(f"✅ DeepFilterNet ready on: {DEVICE}")
-#     except Exception as e:
-#         print(f"❌ DeepFilterNet not available: {e}")
-#         DEEPFILTER_AVAILABLE = False
-
-# # ==========================================
-# # AUDIO PROCESSING
-# # ==========================================
-# def resample_audio(audio, orig_sr, target_sr=48000):
-#     """Resample audio to target sample rate"""
-#     if orig_sr == target_sr:
-#         return audio
-    
-#     num_samples = int(len(audio) * target_sr / orig_sr)
-#     resampled = signal.resample(audio, num_samples)
-#     return resampled
-
+#         print("✅ DeepFilterNet ready!")
 
 # def process_audio(audio_bytes):
 #     """Process audio through DeepFilterNet"""
@@ -438,7 +419,7 @@ CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)  # 24,000 samples
 #     #     print(f"⚠️ Processing error: {e}")
 #     #     return audio_bytes
     
-#     # New
+#     #New
 #     try:
 #         audio = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
 
@@ -455,7 +436,7 @@ CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)  # 24,000 samples
 #     except Exception as e:
 #         print("❌ WS audio processing error:", e)
 #         return audio_bytes
-   
+    
 # async def websocket_handler(request):
 #     """Handle WebSocket connections via aiohttp"""
 #     ws = web.WebSocketResponse()
@@ -463,7 +444,6 @@ CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)  # 24,000 samples
     
 #     role = None
 #     client_ip = request.remote
-#     sender_id = id(ws)  # Unique ID for this sender
 #     print(f"🔌 New WebSocket connection from {client_ip}")
     
 #     try:
@@ -474,7 +454,6 @@ CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)  # 24,000 samples
 #                     role = data.get('role')
 #                     if role == 'sender':
 #                         senders.add(ws)
-#                         audio_buffers[sender_id] = bytearray()  # Initialize buffer
 #                         print(f"📤 Sender registered ({len(senders)} senders, {len(receivers)} receivers)")
 #                     else:
 #                         receivers.add(ws)
@@ -483,29 +462,19 @@ CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)  # 24,000 samples
 #                     await ws.send_json({"type": "registered", "role": role})
                     
 #             elif msg.type == aiohttp.WSMsgType.BINARY and role == 'sender':
-#                 # Add to buffer
-#                 audio_buffers[sender_id].extend(msg.data)
+#                 # Process audio and forward to all receivers
+#                 clean_audio = process_audio(msg.data)
                 
-#                 # Process when buffer is large enough
-#                 if len(audio_buffers[sender_id]) >= CHUNK_SIZE * 2:  # 2 bytes per int16 sample
-#                     # Extract chunk to process
-#                     chunk_bytes = bytes(audio_buffers[sender_id][:CHUNK_SIZE * 2])
-#                     audio_buffers[sender_id] = audio_buffers[sender_id][CHUNK_SIZE * 2:]
-                    
-#                     # Process audio
-#                     clean_audio = process_audio(chunk_bytes)
-                    
-#                     # Forward to all receivers
-#                     dead_receivers = set()
-#                     for receiver in receivers:
-#                         try:
-#                             await receiver.send_bytes(clean_audio)
-#                         except Exception as e:
-#                             dead_receivers.add(receiver)
-                    
-#                     # Remove dead connections
-#                     for dead in dead_receivers:
-#                         receivers.discard(dead)
+#                 dead_receivers = set()
+#                 for receiver in receivers:
+#                     try:
+#                         await receiver.send_bytes(clean_audio)
+#                     except Exception as e:
+#                         dead_receivers.add(receiver)
+                
+#                 # Remove dead connections
+#                 for dead in dead_receivers:
+#                     receivers.discard(dead)
                     
 #             elif msg.type == aiohttp.WSMsgType.ERROR:
 #                 print(f'WebSocket error: {ws.exception()}')
@@ -515,12 +484,9 @@ CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)  # 24,000 samples
 #     finally:
 #         senders.discard(ws)
 #         receivers.discard(ws)
-#         if sender_id in audio_buffers:
-#             del audio_buffers[sender_id]  # Cleanup buffer
 #         print(f"👋 {role or 'Unknown'} disconnected ({len(senders)} senders, {len(receivers)} receivers)")
     
 #     return ws
-   
 
 # ==========================================
 # DEEPFILTER INITIALIZATION
