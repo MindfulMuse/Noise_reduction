@@ -64,3 +64,93 @@ You should see something like:
 - Always use the **ngrok HTTPS URL** on mobile to ensure microphone access works.
 - Reconnect attempts happen automatically if the connection drops.
 - Make sure both sender and receiver devices are connected to the same ngrok session.
+
+
+
+FOR React 
+
+1️⃣ Install ngrok
+
+--Go to https://ngrok.com/download
+   and download for your OS.
+
+--Unzip and place the executable in a folder included in your PATH (or just keep it somewhere handy).
+
+--Authenticate your ngrok account (optional but recommended):
+
+--ngrok authtoken YOUR_NGROK_AUTH_TOKEN
+
+2️⃣ Start Python server
+
+Open a terminal in the folder containing server.py:
+
+-----------------
+python server.py |
+-----------------
+
+
+You should see something like:
+
+✅ Server running on port 8080
+
+ Start React frontend
+-----------------------
+Open another terminal :
+
+cd frontend 
+
+and run:
+
+npm run dev
+
+- Open http://localhost:5173 in your browser.
+- The UI dashboard should load.
+
+
+4️⃣  Start ngrok
+---------------
+Open a third terminal and run:
+
+ngrok http 8080
+
+- Copy the HTTPS URL from ngrok (e.g., https://a53ae11c7737.ngrok-free.app)
+- This URL allows remote devices to access your Python server.
+
+
+5️⃣ Update React WebSocket URL
+------------------------------
+In your React UI (e.g., NoiseCleaner or Dashboard), replace the local WebSocket URL with the ngrok URL:
+ngrok url = https://a53ae11c7737.ngrok-free.app
+URL to enter = wss://a53ae11c7737.ngrok-free.app/ws
+
+
+Open server in your browser / devices
+-----------------------------------------
+- On your laptop open http://localhost:5173/
+- On phone, open the ngrok HTTPS URL.
+- Allow microphone access when prompted.
+
+7️⃣ Select mode
+---------------
+- Click 📤 Sender on the device sending audio.
+- Click 📥 Receiver on the device receiving cleaned audio.
+- Start sending/receiving using the buttons
+
+
+8️⃣
+ Common issues & fixes
+-------------------------
+- Phone keeps disconnecting / reconnecting:
+    - Disable Private DNS temporarily.
+        - Android: Settings → Network & Internet → Private DNS → Off
+        - iOS: Settings → Wi-Fi → Tap network → Configure DNS → Off
+- Browser microphone not working: Make sure you use https:// (ngrok HTTPS) on mobile devices.
+
+
+
+💡 Tips
+--------
+- Always use ngrok HTTPS URL on mobile or remote devices for microphone access.
+- Reconnect attempts happen automatically if the connection drops.
+- Make sure sender and receiver devices use the same ngrok session.
+- Restart ngrok if the URL changes — update React WebSocket URL accordingly.
