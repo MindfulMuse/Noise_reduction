@@ -22,6 +22,7 @@ import socket
 import io
 import soundfile as sf
 import torch
+from scipy import signal
 
 # DeepFilterNet
 try:
@@ -384,50 +385,236 @@ HTML_PAGE = """
 </html>
 """
 
+# WebSocket audio buffers
+audio_buffers = {}
+SAMPLE_RATE = 48000  # DeepFilterNet requires 48kHz
+CHUNK_DURATION = 0.1  # Process every 0.5 seconds
+CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION)  # 24,000 samples
+
+# ==========================================
+# DEEPFILTER INITIALIZATION
+# ==========================================
+# def init_deepfilter():
+#     global df_model, df_state, DEVICE, DEEPFILTER_AVAILABLE
+#     try:
+#         from df.enhance import enhance, init_df
+#         print("🔄 Loading DeepFilterNet...")
+#         df_model, df_state, _ = init_df()
+#         DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+#         df_model = df_model.to(DEVICE)
+#         DEEPFILTER_AVAILABLE = True
+#         print(f"✅ DeepFilterNet ready on: {DEVICE}")
+#     except Exception as e:
+#         print(f"❌ DeepFilterNet not available: {e}")
+#         DEEPFILTER_AVAILABLE = False
+
+# # ==========================================
+# # AUDIO PROCESSING
+# # ==========================================
+# def resample_audio(audio, orig_sr, target_sr=48000):
+#     """Resample audio to target sample rate"""
+#     if orig_sr == target_sr:
+#         return audio
+    
+#     num_samples = int(len(audio) * target_sr / orig_sr)
+#     resampled = signal.resample(audio, num_samples)
+#     return resampled
+
+
+# def process_audio(audio_bytes):
+#     """Process audio through DeepFilterNet"""
+#     global df_model, df_state
+    
+#     audio = np.frombuffer(audio_bytes, dtype=np.int16)
+    
+#     if df_model is None:
+#         return audio_bytes
+    
+#     # try:
+#     #     audio_float = audio.astype(np.float32) / 32768.0
+#     #     enhanced = enhance(df_model, df_state, audio_float)
+#     #     return (enhanced * 32768).astype(np.int16).tobytes()
+#     # except Exception as e:
+#     #     print(f"⚠️ Processing error: {e}")
+#     #     return audio_bytes
+    
+#     # New
+#     try:
+#         audio = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+
+#         audio_tensor = torch.from_numpy(audio).float().to(DEVICE)
+#         if audio_tensor.ndim == 1:
+#             audio_tensor = audio_tensor.unsqueeze(0)
+
+#         enhanced = enhance(df_model, df_state, audio_tensor)
+#         enhanced_np = enhanced.squeeze().detach().cpu().numpy()
+
+#         out_int16 = (enhanced_np * 32768).astype(np.int16)
+#         return out_int16.tobytes()
+
+#     except Exception as e:
+#         print("❌ WS audio processing error:", e)
+#         return audio_bytes
+   
+# async def websocket_handler(request):
+#     """Handle WebSocket connections via aiohttp"""
+#     ws = web.WebSocketResponse()
+#     await ws.prepare(request)
+    
+#     role = None
+#     client_ip = request.remote
+#     sender_id = id(ws)  # Unique ID for this sender
+#     print(f"🔌 New WebSocket connection from {client_ip}")
+    
+#     try:
+#         async for msg in ws:
+#             if msg.type == aiohttp.WSMsgType.TEXT:
+#                 data = json.loads(msg.data)
+#                 if data.get('type') == 'register':
+#                     role = data.get('role')
+#                     if role == 'sender':
+#                         senders.add(ws)
+#                         audio_buffers[sender_id] = bytearray()  # Initialize buffer
+#                         print(f"📤 Sender registered ({len(senders)} senders, {len(receivers)} receivers)")
+#                     else:
+#                         receivers.add(ws)
+#                         print(f"📥 Receiver registered ({len(senders)} senders, {len(receivers)} receivers)")
+                    
+#                     await ws.send_json({"type": "registered", "role": role})
+                    
+#             elif msg.type == aiohttp.WSMsgType.BINARY and role == 'sender':
+#                 # Add to buffer
+#                 audio_buffers[sender_id].extend(msg.data)
+                
+#                 # Process when buffer is large enough
+#                 if len(audio_buffers[sender_id]) >= CHUNK_SIZE * 2:  # 2 bytes per int16 sample
+#                     # Extract chunk to process
+#                     chunk_bytes = bytes(audio_buffers[sender_id][:CHUNK_SIZE * 2])
+#                     audio_buffers[sender_id] = audio_buffers[sender_id][CHUNK_SIZE * 2:]
+                    
+#                     # Process audio
+#                     clean_audio = process_audio(chunk_bytes)
+                    
+#                     # Forward to all receivers
+#                     dead_receivers = set()
+#                     for receiver in receivers:
+#                         try:
+#                             await receiver.send_bytes(clean_audio)
+#                         except Exception as e:
+#                             dead_receivers.add(receiver)
+                    
+#                     # Remove dead connections
+#                     for dead in dead_receivers:
+#                         receivers.discard(dead)
+                    
+#             elif msg.type == aiohttp.WSMsgType.ERROR:
+#                 print(f'WebSocket error: {ws.exception()}')
+                
+#     except Exception as e:
+#         print(f"WebSocket error: {e}")
+#     finally:
+#         senders.discard(ws)
+#         receivers.discard(ws)
+#         if sender_id in audio_buffers:
+#             del audio_buffers[sender_id]  # Cleanup buffer
+#         print(f"👋 {role or 'Unknown'} disconnected ({len(senders)} senders, {len(receivers)} receivers)")
+    
+#     return ws
+   
+
+# ==========================================
+# DEEPFILTER INITIALIZATION
+# ==========================================
 def init_deepfilter():
-    global df_model, df_state
-    if DEEPFILTER_AVAILABLE:
+    global df_model, df_state, DEVICE, DEEPFILTER_AVAILABLE
+    try:
+        from df.enhance import enhance, init_df
         print("🔄 Loading DeepFilterNet...")
         df_model, df_state, _ = init_df()
-        print("✅ DeepFilterNet ready!")
+        DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+        df_model = df_model.to(DEVICE)
+        DEEPFILTER_AVAILABLE = True
+        print(f"✅ DeepFilterNet ready on: {DEVICE}")
+    except Exception as e:
+        print(f"❌ DeepFilterNet not available: {e}")
+        DEEPFILTER_AVAILABLE = False
 
-def process_audio(audio_bytes):
-    """Process audio through DeepFilterNet"""
-    global df_model, df_state
+# ==========================================
+# AUDIO PROCESSING - NO BUFFERING
+# ==========================================
+def resample_audio(audio, orig_sr, target_sr=48000):
+    """Resample audio to target sample rate"""
+    if orig_sr == target_sr:
+        return audio
     
-    audio = np.frombuffer(audio_bytes, dtype=np.int16)
+    num_samples = int(len(audio) * target_sr / orig_sr)
+    resampled = signal.resample(audio, num_samples)
+    return resampled
+
+def process_audio(audio_bytes, sample_rate=48000):
+    """
+    Process audio through DeepFilterNet - IMMEDIATE MODE
     
-    if df_model is None:
+    Args:
+        audio_bytes: Raw PCM audio bytes (int16)
+        sample_rate: Sample rate of input audio (default 48000)
+    
+    Returns:
+        Processed audio bytes (int16)
+    """
+    global df_model, df_state, DEVICE
+    
+    if df_model is None or not DEEPFILTER_AVAILABLE:
         return audio_bytes
     
-    # try:
-    #     audio_float = audio.astype(np.float32) / 32768.0
-    #     enhanced = enhance(df_model, df_state, audio_float)
-    #     return (enhanced * 32768).astype(np.int16).tobytes()
-    # except Exception as e:
-    #     print(f"⚠️ Processing error: {e}")
-    #     return audio_bytes
-    
-    #New
     try:
-        audio = np.frombuffer(audio_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-
-        audio_tensor = torch.from_numpy(audio).float().to(DEVICE)
+        # Convert bytes to numpy array
+        audio = np.frombuffer(audio_bytes, dtype=np.int16)
+        
+        # Skip if too short (less than 10ms)
+        if len(audio) < 480:
+            return audio_bytes
+        
+        # Convert to float32 [-1, 1]
+        audio_float = audio.astype(np.float32) / 32768.0
+        
+        # Resample to 48kHz if needed
+        if sample_rate != 48000:
+            audio_float = resample_audio(audio_float, sample_rate, 48000)
+        
+        # Convert to tensor and move to device
+        audio_tensor = torch.from_numpy(audio_float).float().to(DEVICE)
+        
+        # Add batch dimension if needed
         if audio_tensor.ndim == 1:
             audio_tensor = audio_tensor.unsqueeze(0)
-
-        enhanced = enhance(df_model, df_state, audio_tensor)
+        
+        # Process with DeepFilterNet
+        with torch.no_grad():
+            enhanced = enhance(df_model, df_state, audio_tensor)
+        
+        # Convert back to numpy
         enhanced_np = enhanced.squeeze().detach().cpu().numpy()
-
+        
+        # Clip to prevent overflow
+        enhanced_np = np.clip(enhanced_np, -1.0, 1.0)
+        
+        # Convert back to int16
         out_int16 = (enhanced_np * 32768).astype(np.int16)
+        
         return out_int16.tobytes()
-
-    except Exception as e:
-        print("❌ WS audio processing error:", e)
-        return audio_bytes
     
+    except Exception as e:
+        print(f"❌ Audio processing error: {e}")
+        import traceback
+        traceback.print_exc()
+        return audio_bytes
+
+# ==========================================
+# WEBSOCKET HANDLER - ZERO LATENCY
+# ==========================================
 async def websocket_handler(request):
-    """Handle WebSocket connections via aiohttp"""
+    """Handle WebSocket connections - IMMEDIATE PROCESSING"""
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     
@@ -439,8 +626,10 @@ async def websocket_handler(request):
         async for msg in ws:
             if msg.type == aiohttp.WSMsgType.TEXT:
                 data = json.loads(msg.data)
+                
                 if data.get('type') == 'register':
                     role = data.get('role')
+                    
                     if role == 'sender':
                         senders.add(ws)
                         print(f"📤 Sender registered ({len(senders)} senders, {len(receivers)} receivers)")
@@ -448,34 +637,46 @@ async def websocket_handler(request):
                         receivers.add(ws)
                         print(f"📥 Receiver registered ({len(senders)} senders, {len(receivers)} receivers)")
                     
-                    await ws.send_json({"type": "registered", "role": role})
-                    
+                    await ws.send_json({
+                        "type": "registered",
+                        "role": role,
+                        "deepfilter": DEEPFILTER_AVAILABLE
+                    })
+            
             elif msg.type == aiohttp.WSMsgType.BINARY and role == 'sender':
-                # Process audio and forward to all receivers
-                clean_audio = process_audio(msg.data)
+                # IMMEDIATE PROCESSING - NO BUFFERING!
+                # Process every chunk as it arrives
+                clean_audio = process_audio(msg.data, sample_rate=48000)
                 
+                # Forward to all receivers immediately
                 dead_receivers = set()
                 for receiver in receivers:
                     try:
                         await receiver.send_bytes(clean_audio)
                     except Exception as e:
+                        print(f"⚠️ Error sending to receiver: {e}")
                         dead_receivers.add(receiver)
                 
                 # Remove dead connections
                 for dead in dead_receivers:
                     receivers.discard(dead)
-                    
+            
             elif msg.type == aiohttp.WSMsgType.ERROR:
-                print(f'WebSocket error: {ws.exception()}')
-                
+                print(f'❌ WebSocket error: {ws.exception()}')
+    
     except Exception as e:
-        print(f"WebSocket error: {e}")
+        print(f"❌ WebSocket handler error: {e}")
+        import traceback
+        traceback.print_exc()
+    
     finally:
+        # Cleanup
         senders.discard(ws)
         receivers.discard(ws)
         print(f"👋 {role or 'Unknown'} disconnected ({len(senders)} senders, {len(receivers)} receivers)")
     
     return ws
+
 
 async def index_handler(request):
     """Serve the main page"""
