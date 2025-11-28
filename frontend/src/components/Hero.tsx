@@ -30,6 +30,9 @@ const Hero = () => {
           <nav className="hero__nav">
             <a href="#features">Features</a>
             <a href="#learn">Learn</a>
+             <Link className="btn-primary" to="/NoiseCleaner">
+              Upload
+            </Link>
             <Link className="btn-primary" to="/console">
               Try Live Demo
             </Link>
