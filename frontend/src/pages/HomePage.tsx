@@ -1,30 +1,27 @@
-import Hero from '../components/Hero';
-import UseCasesSection from '../components/UseCasesSection';
-import TestimonialsSection from '../components/TestimonialsSection';
-import FAQSection from '../components/FAQSection';
-import Footer from '../components/Footer';
+import Hero from "../components/Hero";
+import UseCasesSection from "../components/UseCasesSection";
+import TestimonialsSection from "../components/TestimonialsSection";
+import FAQSection from "../components/FAQSection";
+import Footer from "../components/Footer";
 
 const HomePage = () => {
   const howItWorks = [
     {
-      title: 'Capture',
-      body:
-        'Audio originates on any device (phone, field recorder, DAW) and streams into the browser via local WebRTC or direct input.'
+      title: "Capture",
+      body: "Audio is captured from the microphone on the sender device (phone or laptop) and converted into raw PCM chunks. These chunks are streamed instantly to the Python backend via a low-latency WebSocket connection.",
     },
     {
-      title: 'Process',
-      body:
-        'Once inside the browser, the AudioContext routes the stream through an AudioWorklet / RNNoise WASM module for suppression and metering.'
+      title: "Process",
+      body: "The server receives the noisy stream and passes it through DeepFilterNet, a PyTorch-based deep learning model. This neural network intelligently separates human speech from complex background noise on the server’s GPU or CPU.",
     },
     {
-      title: 'Output',
-      body:
-        'Cleaned frames are rendered to the system speakers in <30 ms, while the UI visualizes waveform data in real time.'
-    }
+      title: "Output",
+      body: 'The enhanced, clean audio is broadcasted immediately to connected "Receiver" clients via WebSockets, allowing them to play back the clarified speech in real-time.',
+    },
   ];
 
   return (
-    <div className='HomePage_'>
+    <div className="HomePage_">
       <Hero />
       <UseCasesSection />
       <TestimonialsSection />
@@ -55,10 +52,11 @@ const HomePage = () => {
             </div>
           ))}
         </div>
-        <div className="card" style={{ marginTop: '1.25rem' }}>
-          Phone → Browser: publish the phone microphone over WebRTC (or plug in via USB audio).
-          Laptop receives the stream, feeds it into the same AudioContext graph, and the worklet /
-          WASM layer performs suppression before outputting to speakers.
+        <div className="card" style={{ marginTop: "1.25rem" }}>
+          Phone → Server → Laptop: The phone captures the microphone and streams
+          raw audio to the backend via WebSockets. The server feeds the stream
+          into the DeepFilterNet model for noise suppression, then broadcasts
+          the clean signal to the laptop for immediate playback.
         </div>
       </section>
 
@@ -103,4 +101,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-

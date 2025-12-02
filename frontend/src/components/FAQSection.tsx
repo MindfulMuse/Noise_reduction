@@ -2,29 +2,29 @@ import { useState } from 'react';
 
 const faqs = [
   {
-    question: 'What kind of noise can the browser console remove?',
+    question: 'What technology powers the noise reduction?',
     answer:
-      'The pipeline targets 30+ sources: HVAC hum, traffic, laptop fans, crowd chatter, static from cables, and wind. The AudioWorklet applies a smart gate, while RNNoise (optional WASM) removes broadband noise without harming speech.'
+      'The core engine uses DeepFilterNet, a Low-Complexity Deep Neural Network (DNN) implemented in PyTorch. Unlike simple noise gates, this deep learning model is trained to separate speech from complex, non-stationary background noise (like typing, traffic, or wind) in real-time.'
   },
   {
-    question: 'How do I stream audio from my phone into the app?',
+    question: 'How is audio transmitted between devices?',
     answer:
-      'Open the phone capture page, start a WebRTC call, and accept it on this device. The peer connection feeds directly into the AudioContext so the same suppression/visualizer graph treats the remote stream.'
+      'The system uses a centralized WebSocket architecture (via aiohttp). The "Sender" captures raw PCM audio and streams it to the Python server. The server processes the audio through the DeepFilterNet model (on GPU/CPU) and broadcasts the clean signal to the "Receiver" immediately.'
   },
   {
-    question: 'Do I need native software or drivers?',
+    question: 'Does this require a GPU to run?',
     answer:
-      'No installs required. Everything runs inside Chrome/Edge using Web Audio + WebAssembly. Grant mic permissions (or share a remote track) and the DSP graph spins up instantly.'
+      'While the server can run on a standard CPU, a CUDA-capable GPU is highly recommended for the lowest latency. The system automatically detects if CUDA is available (via torch.cuda) to accelerate the neural network inference steps.'
   },
   {
-    question: 'Can I monitor the cleaned audio in real time?',
+    question: 'Can I process pre-recorded files instead of streaming?',
     answer:
-      'Yes. The analyser node drives the waveform while the processed signal routes to your speakers/headphones with sub-30 ms latency, ideal for live monitoring or foldback.'
+      'Yes. The application supports a file upload mode. You can upload WAV, MP3, or FLAC files to the `/process` endpoint. The server runs the same DeepFilterNet enhancement on the file and returns a downloadable, cleaned WAV file.'
   },
   {
-    question: 'Is the RNNoise model required?',
+    question: 'How do I connect devices on different networks?',
     answer:
-      'No. The default AudioWorklet noise gate + adaptive smoothing already removes constant ambience. If you drop in the RNNoise WASM file, the worklet upgrades automatically for neural suppression.'
+      'For local connections, devices simply need to be on the same WiFi (using the local IP). For remote access, the server is compatible with tunneling services like ngrok. You can expose the WebSocket port (8080) via ngrok and connect the sender/receiver using the generated public URL.'
   }
 ];
 

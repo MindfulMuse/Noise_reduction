@@ -3,34 +3,34 @@ const footerLinks = [
     title: 'Real-time Suite',
     links: [
       { label: 'Noise Reduction Console', href: '#console' },
-      { label: 'Waveform Visualizer', href: '#console' },
-      { label: 'RNNoise Pipeline', href: '#how-it-works' },
+      { label: 'Waveform Visualizer', href: '#console' }, // laptop.py visualizes waveforms
+      { label: 'DeepFilterNet Pipeline', href: '#how-it-works' }, // server.py uses DeepFilterNet
       { label: 'Live Monitoring', href: '#console' }
     ]
   },
   {
     title: 'Capture & Streaming',
     links: [
-      { label: 'Phone → Browser Bridge', href: '#how-it-works' },
-      { label: 'WebRTC Toolkit', href: '#how-it-works' },
-      { label: 'USB & Line-in Capture', href: '#features' },
-      { label: 'Edge Signaling Server', href: '/server-docs' }
+      { label: 'Mobile Sender', href: '#how-it-works' }, // sender.py handles mobile/mic input
+      { label: 'WebSocket Protocol', href: '#how-it-works' }, // server.py uses aiohttp WebSockets
+      { label: 'Microphone Capture', href: '#features' }, // sender.py captures raw audio
+      { label: 'Python Inference Server', href: '/server-docs' } // server.py runs the inference
     ]
   },
   {
     title: 'Processing Engines',
     links: [
-      { label: 'AudioWorklet Graph', href: '#how-it-works' },
-      { label: 'ScriptProcessor Fallback', href: '#stack' },
-      { label: 'RNNoise WASM', href: '#stack' },
-      { label: 'Custom DSP Modules', href: '#stack' }
+      { label: 'PyTorch Backend', href: '#how-it-works' }, // server.py imports torch
+      { label: 'CUDA Acceleration', href: '#stack' }, // server.py checks for cuda availability
+      { label: 'DeepFilterNet Model', href: '#stack' }, // server.py loads init_df
+      { label: '3-Band Equalizer', href: '#stack' } // laptop.py includes an EQ function
     ]
   },
   {
     title: 'Resources',
     links: [
       { label: 'Architecture Notes', href: '#learn' },
-      { label: 'Setup Guide', href: '/docs/setup' },
+      { label: 'Server Setup Guide', href: '/docs/setup' },
       { label: 'Testing with Phone Source', href: '/docs/phone' },
       { label: 'Changelog', href: '/docs/changelog' }
     ]

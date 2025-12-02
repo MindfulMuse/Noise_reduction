@@ -48,6 +48,14 @@ const useCases: UseCase[] = [
       'Remove the background noise in your recorded meeting video and audio, such as typing, closing a door, room echo, or the sounds of a nearby construction site, and retain the crisp meeting call recordings.',
     image:
       'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1000&q=80'
+  },
+  {
+    title: 'Hearing Comfort & Tinnitus',
+    summary: 'Customizable audio relief for sensitive hearing.',
+    details:
+      'Reduce listening fatigue by filtering out harsh background frequencies. Utilize the built-in 3-band equalizer to dampen sharp treble ranges that trigger ringing, while boosting mids for clear, comfortable speech intelligibility.',
+    image:
+      'https://tse1.mm.bing.net/th/id/OIP.tTXZTbJKz9dG9OZNGj2tdQHaFj?rs=1&pid=ImgDetMain&o=7&rm=3'
   }
 ];
 
